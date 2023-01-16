@@ -2,13 +2,12 @@ from argparse import ArgumentParser
 from argparse import Namespace as ArgNamespace
 from pathlib import Path
 from re import compile as re_compile
-from re import split, findall
+from re import findall, split
 from sys import argv
 from typing import Generator
 
-from roman import fromRoman
 from colorama import Fore, Style
-
+from roman import fromRoman
 
 DATE_REGEX = re_compile(r'\d{1,2}[-_]\d{1,2}[-_]\d{4}')
 
@@ -44,31 +43,25 @@ def define_and_read_args(arguments: list[str]) -> ArgNamespace:
 def rename(files: Generator[Path, None, None], directory: Path) -> None:
 
     for file in files:
-        file_name = file.stem
-        file_extension = file.suffix
-        print(f"\n{file_name}")
+        print(f"\n{file.stem}")
 
         try:
-            date, month, year = str(
-                DATE_REGEX.findall(file_name)[0]).split('-')
-            lesson_name = DATE_REGEX.split(file_name)[1].strip('-_')
-            reference_material = findall(
-                r'Reference_Material_[IVX]*', file_name)[0]
-            reference_material_roman = split(
-                r'Reference_Material_', reference_material)[1]
+            date, month, year = str(DATE_REGEX.findall(file.stem)[0]).split('-')
+            lesson_name = DATE_REGEX.split(file.stem)[1].strip('-_')
+            reference_material = findall(r'Reference_Material_[IVX]*', file.stem)[0]
+            reference_material_roman = split(r'Reference_Material_', reference_material)[1]
             reference_material_count = fromRoman(reference_material_roman)
 
         except Exception:
             print(f"{Fore.RED}{Style.BRIGHT}[Wrong format]{Style.RESET_ALL}")
 
         else:
-            new_file_name = f'{year}-{month}-{date}-{lesson_name}-{reference_material_count}{file_extension}'
+            new_file_name = f'{year}-{month}-{date}-{lesson_name}-{reference_material_count}{file.suffix}'
             new_file_name = new_file_name.replace('_', '-').lower()
 
             file.rename(directory / new_file_name)
 
-            print(
-                f"Renamed to {Fore.GREEN}{Style.BRIGHT}{new_file_name}{Style.RESET_ALL}")
+            print(f"Renamed to {Fore.GREEN}{Style.BRIGHT}{new_file_name}{Style.RESET_ALL}")
 
 
 def main(arguments: list[str]) -> None:
