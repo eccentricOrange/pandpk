@@ -4,6 +4,7 @@ from pathlib import Path
 from re import compile as re_compile
 from re import split, findall
 from sys import argv
+from typing import Generator
 
 from roman import fromRoman
 from colorama import Fore, Style
@@ -24,7 +25,8 @@ def define_and_read_args(arguments: list[str]) -> ArgNamespace:
         '--directory',
         type=str,
         help='Directory to rename files in',
-        required=False
+        required=False,
+        default='.'
     )
 
     main_parser.add_argument(
@@ -32,17 +34,14 @@ def define_and_read_args(arguments: list[str]) -> ArgNamespace:
         '--glob',
         type=str,
         help='Glob expression to match files to rename',
-        required=False
+        required=False,
+        default='*'
     )
 
     return main_parser.parse_args(arguments)
 
 
-def get_files_to_rename(glob: str, directory: Path) -> list[Path]:
-    return list(directory.glob(glob))
-
-
-def rename(files: list[Path], directory: Path) -> None:
+def rename(files: Generator[Path, None, None], directory: Path) -> None:
 
     for file in files:
         file_name = file.stem
@@ -50,10 +49,13 @@ def rename(files: list[Path], directory: Path) -> None:
         print(f"\n{file_name}")
 
         try:
-            date, month, year = str(DATE_REGEX.findall(file_name)[0]).split('-')
+            date, month, year = str(
+                DATE_REGEX.findall(file_name)[0]).split('-')
             lesson_name = DATE_REGEX.split(file_name)[1].strip('-_')
-            reference_material = findall(r'Reference_Material_[IVX]*', file_name)[0]
-            reference_material_roman = split(r'Reference_Material_', reference_material)[1]
+            reference_material = findall(
+                r'Reference_Material_[IVX]*', file_name)[0]
+            reference_material_roman = split(
+                r'Reference_Material_', reference_material)[1]
             reference_material_count = fromRoman(reference_material_roman)
 
         except Exception:
@@ -65,14 +67,14 @@ def rename(files: list[Path], directory: Path) -> None:
 
             file.rename(directory / new_file_name)
 
-            print(f"Renamed to {Fore.GREEN}{Style.BRIGHT}{new_file_name}{Style.RESET_ALL}")
+            print(
+                f"Renamed to {Fore.GREEN}{Style.BRIGHT}{new_file_name}{Style.RESET_ALL}")
+
 
 def main(arguments: list[str]) -> None:
     parsed_namespace = define_and_read_args(arguments)
-    directory = parsed_namespace.directory or '.'
-    glob = parsed_namespace.glob or '*'
-    files_to_rename = get_files_to_rename(glob, Path(directory))
-    rename(files_to_rename, Path(directory))
+    directory = Path(parsed_namespace.directory)
+    rename(directory.glob(parsed_namespace.glob), directory)
 
 
 if __name__ == '__main__':
