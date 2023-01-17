@@ -4,20 +4,20 @@
 1.  To setup the environment, first create a virtual environment.
 
     ```sh
-    python -m venv .rename-env
+    python -m venv .rename-venv
     ```
 
 2.  Next, install Python dependencies.
 
     ```sh
-    ./rename-venv/Scripts/python -m pip install -r requirements.txt
+    ./.rename-venv/Scripts/python -m pip install -r requirements.txt
     ```
 
 3. Create a bin folder with a batch file to run the script.
 
     ```sh
     mkdir bin
-    code bin/pandpk.bat
+    notepad bin/pandpk.bat
     ```
 
 4.  Replace the contents of the batch file with the following.
