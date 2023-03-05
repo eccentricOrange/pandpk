@@ -109,7 +109,7 @@ def rename(files: Generator[Path, None, None], directory: Path, legacy: bool) ->
             print(f"{Fore.RED}{Style.BRIGHT}[Wrong format]{Style.RESET_ALL}")
 
         else:
-            file.rename(directory / new_file_name)
+            file.rename(directory / f"{new_file_name}{file.suffix}")
             
             print(f"Renamed to {Fore.GREEN}{Style.BRIGHT}[{new_file_name}]{Style.RESET_ALL}")
 
