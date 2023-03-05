@@ -1,19 +1,21 @@
 from argparse import ArgumentParser
 from argparse import Namespace as ArgNamespace
+from datetime import datetime
+from logging import DEBUG, FATAL, getLogger
 from pathlib import Path
-from re import compile as re_compile
-from re import findall, split
+from re import compile as re_compile, sub
 from sys import argv
 from typing import Generator
-from datetime import datetime
 
 from colorama import Fore, Style
 from roman import fromRoman
 
-
 OLD_REGEX = re_compile(r'.*Reference_Material_(?P<reference_number>[IVX]*)_(?P<day>\d{2})[-_](?P<month>\d{2})[-_](?P<year>\d{4})_(?P<number>\d{0,2})_(?P<topic>[\w_]*)')
 
-NEW_REGEX = re_compile(r'.*ReferenceMaterial(?P<reference_number>[IVX]*)_(?P<day_name>\w{3})(?P<month>\w{3})(?P<day>\d{2})[\d_]*IST(?P<year>\d{4})_(?P<topic>[\w-]*)')
+NEW_REGEX = re_compile(r'.*ReferenceMaterial(?P<reference_number>[IVX]*)_(?P<day_name>\w{3})(?P<month>\w{3}).*IST(?P<year>\d{4})_(?P<topic>[\w-]*)')
+
+logger = getLogger(__name__)
+logger.setLevel(FATAL)
 
 
 def define_and_read_args(arguments: list[str]) -> ArgNamespace:
@@ -64,12 +66,9 @@ def new_convert(
         month: str,
         year: str,
         reference_number: str,
-        topic: str,
-        number: str
+        topic: str
 ) -> str:
-    formatted_topic = topic.replace('_', '-').replace(' ', '-').lower()
-
-    return f'{convert_date(day_name, month, year)}-{formatted_topic}-{fromRoman(reference_number)}-{number}'
+    return f'{convert_date(day_name, month, year)}-{topic}-{fromRoman(reference_number)}'
 
 
 def old_convert(
@@ -80,18 +79,17 @@ def old_convert(
         topic: str,
         number: str
 ) -> str:
-    formatted_topic = topic.replace('_', '-').replace(' ', '-').lower()
-
-    return f'{year}-{month}-{day}-{formatted_topic}-{fromRoman(reference_number)}-{number}'
+    return f'{year}-{month}-{day}-{topic}-{fromRoman(reference_number)}-{number}'
 
 
 def rename(files: Generator[Path, None, None], directory: Path, legacy: bool) -> None:
 
     for file in files:
-        print(f"\n{file.stem}")
+        print(f"\n{file}")
 
         try:
             if legacy:
+                
                 if extracted_data := OLD_REGEX.match(file.stem):
                     new_file_name = old_convert(**extracted_data.groupdict())
 
@@ -105,11 +103,14 @@ def rename(files: Generator[Path, None, None], directory: Path, legacy: bool) ->
                 else:
                     raise ValueError('No match')
 
-        except Exception:
+        except Exception as e:
+            logger.exception(e)
             print(f"{Fore.RED}{Style.BRIGHT}[Wrong format]{Style.RESET_ALL}")
 
         else:
-            file.rename(directory / f"{new_file_name}{file.suffix}")
+            new_file_name = sub(r'[- ]', '_', new_file_name, count=-1).lower()
+            new_file_name = f"{new_file_name}{file.suffix}"
+            file.rename(directory / new_file_name)
             
             print(f"Renamed to {Fore.GREEN}{Style.BRIGHT}[{new_file_name}]{Style.RESET_ALL}")
 
