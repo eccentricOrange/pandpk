@@ -10,7 +10,9 @@ from typing import Generator
 from colorama import Fore, Style
 from roman import fromRoman
 
-OLD_REGEX = re_compile(r'.*Reference_Material_(?P<reference_number>[IVX]*)_(?P<day>\d{2})[-_](?P<month>\d{2})[-_](?P<year>\d{4})_(?P<number>\d{0,2})_(?P<topic>[\w_]*)')
+OLD_REGEX_ONE = re_compile(r'.*Reference_Material_(?P<reference_number>[IVX]*)_(?P<day>\d{2})[-_](?P<month>\d{2})[-_](?P<year>\d{4})_(?P<number>\d{0,2})_(?P<topic>[\w_]*)')
+
+OLD_REGEX_TWO = re_compile(r'.*(?P<year>\d{4})[-_](?P<month>\d{2})[-_](?P<day>\d{2})_Reference_Material_(?P<reference_number>[IVX]*)_((?P<number>\d{0,2})_)?(?P<topic>[\w_]*)')
 
 NEW_REGEX = re_compile(r'.*ReferenceMaterial(?P<reference_number>[IVX]*)_(?P<day_name>\w{3})(?P<month>\w{3}).*IST(?P<year>\d{4})_(?P<topic>[\w-]*)')
 
@@ -79,7 +81,10 @@ def old_convert(
         topic: str,
         number: str
 ) -> str:
-    return f'{year}-{month}-{day}-{topic}-{fromRoman(reference_number)}-{number}'
+    if number:
+        return f'{year}-{month}-{day}-{topic}-{fromRoman(reference_number)}-{number}'
+    
+    return f'{year}-{month}-{day}-{topic}-{fromRoman(reference_number)}'
 
 
 def rename(files: Generator[Path, None, None], directory: Path, legacy: bool) -> None:
@@ -90,7 +95,10 @@ def rename(files: Generator[Path, None, None], directory: Path, legacy: bool) ->
         try:
             if legacy:
                 
-                if extracted_data := OLD_REGEX.match(file.stem):
+                if extracted_data := (
+                    OLD_REGEX_ONE.match(file.stem) or \
+                    OLD_REGEX_TWO.match(file.stem)
+                ):
                     new_file_name = old_convert(**extracted_data.groupdict())
 
                 else:
