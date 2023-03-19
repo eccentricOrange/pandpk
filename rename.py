@@ -118,8 +118,13 @@ def rename(files: Generator[Path, None, None], directory: Path, legacy: bool) ->
         else:
             new_file_name = sub(r'[- ]', '_', new_file_name, count=-1).lower()
             new_file_name = f"{new_file_name}{file.suffix}"
-            file.rename(directory / new_file_name)
-            
+            new_path = directory / new_file_name
+
+            if new_path.exists():
+                print(f"{Fore.YELLOW}{Style.BRIGHT}[Renamed file already exists. Deleting previous version]{Style.RESET_ALL}")
+                new_path.unlink()
+
+            file.rename(new_path)
             print(f"Renamed to {Fore.GREEN}{Style.BRIGHT}[{new_file_name}]{Style.RESET_ALL}")
 
 
